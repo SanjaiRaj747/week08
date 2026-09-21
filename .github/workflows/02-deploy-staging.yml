@@ -14,8 +14,11 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
 
+    # Deploy only for CI runs that tested a commit already on main. A CI run
+    # started by a pull request validates the branch but must not deploy.
     if: >
-      ${{ github.event.workflow_run.conclusion == 'success' }}
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event != 'pull_request' }}
 
     environment:
       name: staging

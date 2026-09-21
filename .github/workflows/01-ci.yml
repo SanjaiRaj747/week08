@@ -5,7 +5,14 @@ on:
   push:
     branches:
       - main
-  
+
+  # Validate every pull request that targets main before it is merged.
+  # Only the tests run for a pull request; images are built and the deployment
+  # chain starts once the pull request is merged into main.
+  pull_request:
+    branches:
+      - main
+
   # Manual trigger for the workflow
   workflow_dispatch:
 
