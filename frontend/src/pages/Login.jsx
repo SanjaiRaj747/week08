@@ -93,14 +93,15 @@ const Login = () => {
             variant="h4"
             gutterBottom
           >
-            KoalaTech University
+            KoalaTech University 9.3C
           </Typography>
 
           <Typography
             color="text.secondary"
             sx={{ mb: 3 }}
           >
-            Sign in to continue
+            Released automatically by GitHub
+            Actions &mdash; sign in to continue
           </Typography>
 
           {error && (
