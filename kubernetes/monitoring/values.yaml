@@ -1,0 +1,106 @@
+# kubernetes/monitoring/values.yaml
+#
+# Helm values for the prometheus-community/kube-prometheus-stack chart, used to
+# add Prometheus and Grafana to the Week 08 KoalaTech deployment on AKS.
+#
+# Installed with:
+#   helm install monitoring prometheus-community/kube-prometheus-stack \
+#     --namespace monitoring --create-namespace \
+#     --values kubernetes/monitoring/values.yaml
+
+#
+# --- Control plane scrape targets -------------------------------------------
+#
+# AKS is a managed service: the control plane runs in Microsoft's subscription
+# and its components do not expose scrapeable endpoints inside the cluster.
+# Leaving these enabled produces four permanently "down" targets in Prometheus,
+# so they are switched off.
+#
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeEtcd:
+  enabled: false
+
+kubeProxy:
+  enabled: false
+
+#
+# --- Prometheus --------------------------------------------------------------
+#
+prometheus:
+  prometheusSpec:
+    # Short retention: this is a teaching cluster that is destroyed after the
+    # practical, so there is no value in keeping weeks of samples.
+    retention: 6h
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+
+    # Discover ServiceMonitors and PodMonitors in every namespace, not only
+    # those carrying this release's Helm label. This is what would allow the
+    # KoalaTech services to be scraped later if application-level metrics were
+    # added to them.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 400Mi
+      limits:
+        memory: 1Gi
+
+#
+# --- Alertmanager ------------------------------------------------------------
+#
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 100Mi
+
+#
+# --- Grafana -----------------------------------------------------------------
+#
+grafana:
+  enabled: true
+  adminUser: admin
+
+  # ClusterIP rather than LoadBalancer: Grafana is reached with
+  #   kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
+  # which keeps the dashboard off the public internet.
+  service:
+    type: ClusterIP
+    port: 80
+
+  # The chart ships the standard Kubernetes dashboard set and wires Prometheus
+  # in as the default datasource.
+  defaultDashboardsEnabled: true
+
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: ALL
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+#
+# --- Exporters ---------------------------------------------------------------
+#
+# node-exporter runs as a DaemonSet and supplies node/infrastructure metrics.
+# kube-state-metrics turns Kubernetes object state into metrics (deployment
+# replica counts, pod phases, restart counts, PVC status).
+#
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
